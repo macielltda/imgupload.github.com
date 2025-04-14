@@ -3,109 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload de Foto para o Google Drive</title>
+    <title>Upload de Fotos para o Google Drive</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4285F4;
+            text-align: center;
         }
         .camera-container {
             position: relative;
             width: 100%;
             max-width: 500px;
-            margin: 0 auto;
+            margin: 20px auto;
+            border: 2px dashed #ccc;
+            padding: 10px;
+            border-radius: 8px;
         }
         #video {
             width: 100%;
             background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            display: none;
-        }
-        #canvas {
-            width: 100%;
+            border-radius: 5px;
             display: none;
         }
         #photoPreview {
             width: 100%;
             max-height: 400px;
             object-fit: contain;
-            border: 1px solid #ccc;
+            border-radius: 5px;
             display: none;
         }
         .buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         button {
             padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
         }
         button:hover {
-            background-color: #45a049;
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        #authButton {
+            background-color: #4285F4;
+            color: white;
+            margin: 0 auto 20px;
+            display: block;
+        }
+        #startCamera {
+            background-color: #34A853;
+            color: white;
+        }
+        #takePhoto, #submit {
+            background-color: #EA4335;
+            color: white;
+        }
+        #uploadFile {
+            background-color: #FBBC05;
+            color: #202124;
+        }
+        #retakePhoto {
+            background-color: #9E9E9E;
+            color: white;
         }
         textarea {
             width: 100%;
             height: 100px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             resize: vertical;
+            font-family: Arial;
+            margin-top: 15px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
+            color: #555;
         }
         #status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
+            margin: 20px 0;
+            padding: 12px;
+            border-radius: 5px;
             display: none;
+            text-align: center;
         }
         .success {
-            background-color: #dff0d8;
-            color: #3c763d;
-            border: 1px solid #d6e9c6;
+            background-color: #E6F4EA;
+            color: #137333;
+            border: 1px solid #B7E1B6;
         }
         .error {
-            background-color: #f2dede;
-            color: #a94442;
-            border: 1px solid #ebccd1;
+            background-color: #FCE8E6;
+            color: #C5221F;
+            border: 1px solid #F5B7B1;
         }
-        #authButton {
-            background-color: #4285F4;
+        #fileInput {
+            display: none;
         }
-        #authButton:hover {
-            background-color: #3367D6;
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Upload de Foto para o Google Drive</h1>
+        <h1>Upload de Fotos para o Google Drive</h1>
         
-        <!-- Botão de Autenticação do Google -->
-        <button id="authButton" style="display: none;">Entrar com Google</button>
+        <button id="authButton" style="display: none;">
+            <span id="authButtonText">Entrar com Google</span>
+            <span id="authSpinner" class="loading" style="display: none;"></span>
+        </button>
         
         <div class="camera-container">
-            <video id="video" autoplay></video>
-            <canvas id="canvas"></canvas>
+            <video id="video" autoplay playsinline></video>
             <img id="photoPreview" alt="Pré-visualização da foto">
             
             <div class="buttons">
@@ -115,7 +156,7 @@
                 <button id="retakePhoto" disabled>Tirar Novamente</button>
             </div>
             
-            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display: none;">
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
         </div>
         
         <div class="form-group">
@@ -123,7 +164,10 @@
             <textarea id="observations" placeholder="Digite suas observações aqui..."></textarea>
         </div>
         
-        <button id="submit" disabled>Enviar para o Google Drive</button>
+        <button id="submit" disabled>
+            <span id="submitText">Enviar para o Google Drive</span>
+            <span id="submitSpinner" class="loading" style="display: none;"></span>
+        </button>
         
         <div id="status"></div>
     </div>
@@ -131,9 +175,13 @@
     <!-- Carrega a API do Google -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
+        // Configurações
+        const CLIENT_ID = 'SEU_CLIENT_ID.apps.googleusercontent.com';
+        const API_KEY = 'SUA_API_KEY';
+        const APP_ROOT = 'https://macielltda.github.io/imgupload.github.com/';
+        
         // Elementos DOM
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
         const photoPreview = document.getElementById('photoPreview');
         const startCameraBtn = document.getElementById('startCamera');
         const takePhotoBtn = document.getElementById('takePhoto');
@@ -144,58 +192,41 @@
         const submitBtn = document.getElementById('submit');
         const statusDiv = document.getElementById('status');
         const authButton = document.getElementById('authButton');
+        const authButtonText = document.getElementById('authButtonText');
+        const authSpinner = document.getElementById('authSpinner');
+        const submitText = document.getElementById('submitText');
+        const submitSpinner = document.getElementById('submitSpinner');
         
+        // Variáveis de estado
         let stream = null;
         let photoDataUrl = null;
         let isGoogleAuthenticated = false;
         
-        // Inicializa a API do Google
-        function initGoogleAPI() {
-            gapi.load('client:auth2', initClient);
-        }
+        // ==================== FUNÇÕES PRINCIPAIS ====================
         
-        // Configura o cliente Google
-        function initClient() {
-            gapi.client.init({
-                apiKey: 'SUA_API_KEY',
-                clientId: 'SEU_CLIENT_ID.apps.googleusercontent.com',
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                scope: 'https://www.googleapis.com/auth/drive.file'
-            }).then(() => {
-                // Mostra o botão de login
-                authButton.style.display = 'block';
-                
-                // Verifica se já está autenticado
-                if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
-                    isGoogleAuthenticated = true;
-                    authButton.textContent = 'Sair do Google';
-                    showStatus('Conectado ao Google Drive!', 'success');
-                }
-            }).catch(err => {
-                showStatus('Erro ao carregar a API do Google: ' + err.message, 'error');
-            });
-        }
-        
-        // Autenticação Google
-        authButton.addEventListener('click', () => {
-            if (isGoogleAuthenticated) {
-                gapi.auth2.getAuthInstance().signOut();
-                authButton.textContent = 'Entrar com Google';
-                isGoogleAuthenticated = false;
-                showStatus('Desconectado do Google Drive.', 'success');
-            } else {
-                gapi.auth2.getAuthInstance().signIn().then(() => {
-                    isGoogleAuthenticated = true;
-                    authButton.textContent = 'Sair do Google';
-                    showStatus('Conectado ao Google Drive!', 'success');
-                }).catch(err => {
-                    showStatus('Erro ao autenticar: ' + err.message, 'error');
-                });
+        // Inicialização quando a página carrega
+        window.addEventListener('load', () => {
+            initCameraControls();
+            loadGoogleAPI();
+            
+            // Verifica se estamos voltando de um redirecionamento OAuth
+            if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+                showStatus('Processando autenticação...', 'success');
             }
         });
         
-        // Iniciar câmera
-        startCameraBtn.addEventListener('click', async () => {
+        // ==================== CONTROLES DA CÂMERA ====================
+        
+        function initCameraControls() {
+            startCameraBtn.addEventListener('click', startCamera);
+            takePhotoBtn.addEventListener('click', takePhoto);
+            uploadFileBtn.addEventListener('click', () => fileInput.click());
+            retakePhotoBtn.addEventListener('click', retakePhoto);
+            fileInput.addEventListener('change', handleFileSelect);
+            submitBtn.addEventListener('click', uploadToDrive);
+        }
+        
+        async function startCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'environment' },
@@ -205,7 +236,6 @@
                 video.srcObject = stream;
                 video.style.display = 'block';
                 photoPreview.style.display = 'none';
-                canvas.style.display = 'none';
                 
                 startCameraBtn.disabled = true;
                 takePhotoBtn.disabled = false;
@@ -213,18 +243,19 @@
                 retakePhotoBtn.disabled = true;
                 submitBtn.disabled = true;
                 
-                showStatus('Câmera iniciada com sucesso!', 'success');
+                showStatus('Câmera iniciada! Aponte para o que deseja fotografar.', 'success');
             } catch (err) {
                 showStatus('Erro ao acessar a câmera: ' + err.message, 'error');
+                console.error('Erro na câmera:', err);
             }
-        });
+        }
         
-        // Tirar foto
-        takePhotoBtn.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
+        function takePhoto() {
+            const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             photoDataUrl = canvas.toDataURL('image/jpeg');
             photoPreview.src = photoDataUrl;
@@ -234,17 +265,12 @@
             
             takePhotoBtn.disabled = true;
             retakePhotoBtn.disabled = false;
-            submitBtn.disabled = false;
+            submitBtn.disabled = !isGoogleAuthenticated;
             
             showStatus('Foto capturada! Adicione observações e envie.', 'success');
-        });
+        }
         
-        // Selecionar arquivo
-        uploadFileBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', (e) => {
+        function handleFileSelect(e) {
             const file = e.target.files[0];
             if (file && file.type.match('image.*')) {
                 const reader = new FileReader();
@@ -261,7 +287,7 @@
                     photoPreview.style.display = 'block';
                     takePhotoBtn.disabled = true;
                     retakePhotoBtn.disabled = false;
-                    submitBtn.disabled = false;
+                    submitBtn.disabled = !isGoogleAuthenticated;
                     startCameraBtn.disabled = false;
                     
                     showStatus('Imagem carregada! Adicione observações e envie.', 'success');
@@ -271,10 +297,9 @@
             } else {
                 showStatus('Por favor, selecione um arquivo de imagem válido.', 'error');
             }
-        });
+        }
         
-        // Tirar foto novamente
-        retakePhotoBtn.addEventListener('click', () => {
+        function retakePhoto() {
             if (stream) {
                 video.style.display = 'block';
                 photoPreview.style.display = 'none';
@@ -292,10 +317,87 @@
             }
             
             showStatus('Pronto para tirar nova foto ou selecionar imagem.', 'success');
+        }
+        
+        // ==================== GOOGLE DRIVE INTEGRATION ====================
+        
+        function loadGoogleAPI() {
+            gapi.load('client:auth2', initGoogleClient);
+        }
+        
+        function initGoogleClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                redirect_uri: getRedirectUri()
+            }).then(() => {
+                authButton.style.display = 'block';
+                
+                // Verifica se já está autenticado
+                const authInstance = gapi.auth2.getAuthInstance();
+                if (authInstance.isSignedIn.get()) {
+                    handleAuthChange(true);
+                }
+                
+                // Listener para mudanças de autenticação
+                authInstance.isSignedIn.listen(handleAuthChange);
+                
+            }).catch(err => {
+                console.error('Erro ao inicializar Google API:', err);
+                showStatus('Erro ao carregar a API do Google', 'error');
+            });
+        }
+        
+        function handleAuthChange(isSignedIn) {
+            isGoogleAuthenticated = isSignedIn;
+            
+            if (isSignedIn) {
+                authButtonText.textContent = 'Sair do Google';
+                showStatus('Conectado ao Google Drive!', 'success');
+                submitBtn.disabled = !photoDataUrl;
+                
+                // Redireciona de volta para a URL completa se necessário
+                if (window.location.href.startsWith(getRedirectUri()) {
+                    setTimeout(() => {
+                        if (window.location.href !== APP_ROOT) {
+                            window.history.replaceState({}, document.title, APP_ROOT);
+                        }
+                    }, 500);
+                }
+            } else {
+                authButtonText.textContent = 'Entrar com Google';
+                submitBtn.disabled = true;
+            }
+            
+            authSpinner.style.display = 'none';
+        }
+        
+        // Evento de clique no botão de autenticação
+        authButton.addEventListener('click', () => {
+            const authInstance = gapi.auth2.getAuthInstance();
+            
+            if (authInstance.isSignedIn.get()) {
+                authInstance.signOut();
+            } else {
+                authSpinner.style.display = 'inline-block';
+                
+                // Se não estiver na raiz, redireciona para autenticação
+                if (!window.location.href.startsWith(getRedirectUri())) {
+                    window.location.href = getRedirectUri();
+                } else {
+                    authInstance.signIn().then(() => {
+                        authSpinner.style.display = 'none';
+                    }).catch(err => {
+                        authSpinner.style.display = 'none';
+                        showStatus('Erro ao autenticar: ' + err.error, 'error');
+                    });
+                }
+            }
         });
         
-        // Enviar para o Google Drive
-        submitBtn.addEventListener('click', async () => {
+        async function uploadToDrive() {
             if (!photoDataUrl) {
                 showStatus('Nenhuma foto para enviar.', 'error');
                 return;
@@ -309,6 +411,8 @@
             const observations = observationsInput.value.trim();
             
             try {
+                submitText.textContent = 'Enviando...';
+                submitSpinner.style.display = 'inline-block';
                 submitBtn.disabled = true;
                 showStatus('Enviando dados para o Google Drive...', 'success');
                 
@@ -317,58 +421,61 @@
                 const fileName = `foto_${Date.now()}.jpg`;
                 
                 // Enviar para o Google Drive
-                const fileId = await uploadToGoogleDrive(blob, fileName, observations);
+                const file = await uploadToGoogleDrive(blob, fileName, observations);
                 
-                showStatus(`Foto e observações salvas no Google Drive! ID: ${fileId}`, 'success');
+                showStatus(`Foto enviada com sucesso! <a href="https://drive.google.com/file/d/${file.id}/view" target="_blank">Ver no Drive</a>`, 'success');
                 
                 // Limpar formulário após envio
-                photoPreview.style.display = 'none';
-                photoDataUrl = null;
-                observationsInput.value = '';
-                submitBtn.disabled = true;
-                retakePhotoBtn.disabled = true;
+                resetForm();
                 
-                if (stream) {
-                    video.style.display = 'block';
-                    takePhotoBtn.disabled = false;
-                } else {
-                    startCameraBtn.disabled = false;
-                }
             } catch (err) {
-                showStatus('Erro ao enviar dados: ' + err.message, 'error');
-                submitBtn.disabled = false;
+                console.error('Erro no upload:', err);
+                showStatus('Erro ao enviar: ' + (err.message || 'Tente novamente'), 'error');
+            } finally {
+                submitText.textContent = 'Enviar para o Google Drive';
+                submitSpinner.style.display = 'none';
+                submitBtn.disabled = !photoDataUrl || !isGoogleAuthenticated;
             }
-        });
+        }
         
-        // Função para enviar para o Google Drive
         async function uploadToGoogleDrive(blob, fileName, description) {
             const metadata = {
                 name: fileName,
-                mimeType: 'image/jpeg',
-                description: description,
-                parents: ['PASTA_DESTINO_ID'] // Opcional - ID de uma pasta específica
+                mimeType: blob.type,
+                description: description
             };
 
-            const accessToken = gapi.auth.getToken().access_token;
             const formData = new FormData();
             formData.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
             formData.append('file', blob);
 
             const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                 method: 'POST',
-                headers: new Headers({'Authorization': 'Bearer ' + accessToken}),
+                headers: {
+                    'Authorization': 'Bearer ' + gapi.auth.getToken().access_token
+                },
                 body: formData
             });
 
             if (!response.ok) {
-                throw new Error('Erro ao enviar para o Google Drive');
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Erro no upload');
             }
 
-            const data = await response.json();
-            return data.id;
+            return await response.json();
         }
         
-        // Função para converter Data URL para Blob
+        // ==================== FUNÇÕES AUXILIARES ====================
+        
+        function getRedirectUri() {
+            // Para GitHub Pages, usamos apenas o domínio raiz
+            if (window.location.hostname.includes('github.io')) {
+                return 'https://' + window.location.hostname.split('/')[0];
+            }
+            // Para desenvolvimento local
+            return 'http://' + window.location.host;
+        }
+        
         function dataURLtoBlob(dataurl) {
             const arr = dataurl.split(',');
             const mime = arr[0].match(/:(.*?);/)[1];
@@ -381,9 +488,8 @@
             return new Blob([u8arr], { type: mime });
         }
         
-        // Função para mostrar status
         function showStatus(message, type) {
-            statusDiv.textContent = message;
+            statusDiv.innerHTML = message;
             statusDiv.className = type;
             statusDiv.style.display = 'block';
             
@@ -392,8 +498,24 @@
             }, 5000);
         }
         
-        // Inicializa a API do Google quando a página carrega
-        window.onload = initGoogleAPI;
+        function resetForm() {
+            photoPreview.style.display = 'none';
+            photoDataUrl = null;
+            observationsInput.value = '';
+            
+            if (stream) {
+                video.style.display = 'block';
+                takePhotoBtn.disabled = false;
+                retakePhotoBtn.disabled = true;
+            } else {
+                fileInput.value = '';
+                startCameraBtn.disabled = false;
+                takePhotoBtn.disabled = true;
+                retakePhotoBtn.disabled = true;
+            }
+            
+            submitBtn.disabled = true;
+        }
     </script>
 </body>
 </html>
